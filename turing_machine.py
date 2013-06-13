@@ -14,13 +14,19 @@ class Tape:
         return 'Cursor: {0}.\nRight Tape: {1}\nLeft Tape: {2}'.format(self.__cursor, self.__tape_right, self.__tape_left)
 
 
-    def reserve(self):
+    def __ensure_tape_size__(self):
+        """
+        Called in the beginning of Print to make sure that there's enough tape for cursor not to go over the cliff.
+        """
         while self.__cursor >= len(self.__tape_right):
             self.__tape_right.extend([None]*len(self.__tape_right))
         while self.__cursor < -len(self.__tape_left):
             self.__tape_left.extend([None]*len(self.__tape_left))
 
     def Read(self):
+        """
+        Read the symbol under cursor. None if it is out of the tape.
+        """
         if self.__cursor >= 0:
             if self.__cursor < len(self.__tape_right):
                 return self.__tape_right[self.__cursor]
@@ -37,7 +43,7 @@ class Tape:
         self.Print(None)
 
     def Print(self, symbol):
-        self.reserve()
+        self.__ensure_tape_size__()
         if self.__cursor >= 0:
             self.__tape_right[self.__cursor] = symbol
         else:
@@ -83,7 +89,7 @@ class TuringMachine:
         s = self.__tape.Read()
         inst = self.__inst_table[self.__cur_state]
         if isinstance(inst, dict):
-            actions, final_state = inst[s]
+            actions, final_state = inst[s] if inst.has_key(s) else inst[None]
         else:
             actions, final_state = inst
         if callable(actions):
@@ -102,9 +108,16 @@ class TuringMachine:
         return 'Turing Machine\nTM State: {0}\n{1}'.format(self.__cur_state, self.__tape)
 
 if __name__=='__main__':
-    it = eval("""{'b':{None:((Tape.P0,), 'b'),
-    '0':([Tape.R, Tape.R, Tape.P1], 'b'),
-    '1':((Tape.R, Tape.R, Tape.P0), 'b')},}""")
+    it ={
+        'b':{
+            None:  ((Tape.P0,),
+                    'b'),
+            '0':    ([Tape.R, Tape.R, Tape.P1],
+                     'b'),
+            '1':    ((Tape.R, Tape.R, Tape.P0),
+                     'b')
+            }
+        }
     tm = TuringMachine(initial_state='b', instruction_table=it)
 
     for i in range(20):

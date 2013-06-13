@@ -11,7 +11,7 @@ class Tape:
         self.__cursor = cursor
 
     def __str__(self):
-        return 'Cursor: {0}.\nRight Tape: {1}\nLeft Tape: {2}'.format(self.__cursor, self.__tape_right, self.__tape_left)
+        return 'Cursor: {0}\nRight Tape: {1}\nLeft Tape: {2}'.format(self.__cursor, self.__tape_right, self.__tape_left)
 
 
     def __ensure_tape_size__(self):
@@ -57,6 +57,11 @@ class Tape:
     def Backward(self, steps = 1):
         self.Forward(-steps)
 
+    def Decode(self, encoded_tape):
+        self.__cursor, self.__tape_right, self.__tape_left = eval(encoded_tape)
+    def Encode(self):
+        return '({0},{1},{2})'.format(self.__cursor, self.__tape_right, self.__tape_left)
+
     P0 = (Print, '0')
     P1 = (Print, '1')
     P2 = (Print, '2')
@@ -78,12 +83,13 @@ class Tape:
 
 class TuringMachine:
 
-    def __init__(self, initial_state, instruction_table):
+    def __init__(self, initial_state, instruction_table, tape=None):
         """
         """
-        self.__tape = Tape()
-        self.__cur_state  = initial_state
-        self.__inst_table = instruction_table
+        self.__tape         = Tape() if not tape else tape
+        self.__cur_state    = initial_state
+        self.__inst_table   = instruction_table
+        self.__steps        = 0
 
     def Step(self):
         s = self.__tape.Read()
@@ -103,9 +109,27 @@ class TuringMachine:
                 else:
                     raise Exception()
         self.__cur_state = final_state
+        self.__steps += 1
 
     def __str__(self):
-        return 'Turing Machine\nTM State: {0}\n{1}'.format(self.__cur_state, self.__tape)
+        return 'Turing Machine({2})\nTM State: {0}\n{1}'.format(self.__cur_state, self.__tape, self.__steps)
+
+    def Encode(self):
+        encoded_inst_table = []
+        for state, action_map in self.__inst_table.items():
+            encoded_action_map = []
+            for symbol, actions in action_map.items():
+                actions_str = []
+                for action in actions:
+                    print action
+                    actions_str.append(action)
+                encoded_action_map.append('{0}: {1}'.format(symbol, actions_str))
+            encoded_inst_table.append()
+        return '({0},{1},"{2}",{3})'.format(self.__cur_state, '',self.__tape.Encode(),self.__steps)
+
+    def Decode(self, encoded_tm):
+        self.__cur_state,self.__inst_table,encoded_tape,self.__steps = eval(encoded_tm)
+        self.__tape.Decode(encoded_tape)
 
 if __name__=='__main__':
     it ={
@@ -118,9 +142,15 @@ if __name__=='__main__':
                      'b')
             }
         }
-    tm = TuringMachine(initial_state='b', instruction_table=it)
+    tape = Tape()
+    tm = TuringMachine(initial_state='b', instruction_table=it, tape=tape)
 
-    for i in range(20):
+    enc_tm = tm.Encode()
+
+    for i in range(2):
         tm.Step()
         print tm
         print '-'*20
+
+    tm.Decode(enc_tm)
+    print tm

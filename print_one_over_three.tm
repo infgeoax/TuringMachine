@@ -2,7 +2,7 @@
 
 # Turing Machine Instructions
 # 1. Print
-#   (Print, s) - Prints symbol s under cursor, where s is usually a string of length 1, or any valid python data.
+#   (Print, s) - Prints symbol s under cursor, where s is usually a string of length 1, or any valid python value.
 #       -- P0~P9, Px, Py, Pz are short-hands for (Print, 0), (Print, 1), ..., (Print, 9), (Print, 'x'), (Print, 'y'), (Print, 'z')
 #   E/Erase - Removes symbol under cursor, the same as (Print, None).
 # 2. Tape cursor movement

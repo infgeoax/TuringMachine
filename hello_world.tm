@@ -1,0 +1,1 @@
+('a',u"{'a': ([(Print, 'Hello, world.')], 'a')}")

@@ -52,7 +52,7 @@ class Tape(object):
     def TapeString(self):
         right_str = ''.join(filter(lambda x: x, self.__tape_right))
         left_str = ''.join(reversed(filter(lambda x: x, self.__tape_left)))
-        return left_str + '.' + right_str
+        return left_str + right_str
 
     def Forward(self, steps = 1):
         self.__cursor += steps
@@ -115,7 +115,7 @@ class TuringMachine(object):
 
     def cleanup_input_string(self, str):
         if str:
-            return str.replace(' ', '').replace('\n', '').replace('\r', '').replace('\t', '')
+            return str.replace('\n', '').strip()
         else:
             return str
 
@@ -197,13 +197,10 @@ if __name__=='__main__':
         if len(sys.argv) > 2:
             max_steps = int(sys.argv[2])
 
-        sys.stderr.write('[0]: ' + tm.tape.TapeString() + '\n')
-
         for i in range(max_steps):
             tm.Step()
 
-        sys.stderr.write('[{0}]: '.format(max_steps) + tm.tape.TapeString() + '\n')
-        sys.stderr.flush()
+        sys.stderr.write(tm.tape.TapeString())
 
     else:
         print 'Usage: python %s encoded_tm_file(utf-8) [max steps, default 10]' % __file__

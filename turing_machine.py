@@ -1,7 +1,7 @@
 # coding=utf-8
 __author__ = 'infgeoax'
 
-class Tape:
+class Tape(object):
     def __init__(self, tape_right=None, tape_left=None, cursor=0):
         if not tape_left: tape_left = [None]
         if not tape_right: tape_right = [None]
@@ -11,8 +11,7 @@ class Tape:
         self.__cursor = cursor
 
     def __str__(self):
-        return 'Cursor: {0}\nRight Tape: {1}\nLeft Tape: {2}'.format(self.__cursor, self.__tape_right, self.__tape_left)
-
+        return 'Tape(cursor={0}, right_tape={1}, left_tape={2}'.format(self.__cursor, self.__tape_right, self.__tape_left)
 
     def __ensure_tape_size__(self):
         """
@@ -50,6 +49,10 @@ class Tape:
             c = -(self.__cursor+1)
             self.__tape_left[c] = symbol
 
+    def TapeString(self):
+        right_str = ''.join(filter(lambda x: x, self.__tape_right))
+        left_str = ''.join(reversed(filter(lambda x: x, self.__tape_left)))
+        return left_str + '.' + right_str
 
     def Forward(self, steps = 1):
         self.__cursor += steps
@@ -59,98 +62,147 @@ class Tape:
 
     def Decode(self, encoded_tape):
         self.__cursor, self.__tape_right, self.__tape_left = eval(encoded_tape)
+
     def Encode(self):
         return '({0},{1},{2})'.format(self.__cursor, self.__tape_right, self.__tape_left)
 
-    P0 = (Print, '0')
-    P1 = (Print, '1')
-    P2 = (Print, '2')
-    P3 = (Print, '3')
-    P4 = (Print, '4')
-    P5 = (Print, '5')
-    P6 = (Print, '6')
-    P7 = (Print, '7')
-    P8 = (Print, '8')
-    P9 = (Print, '9')
+    P = Print
+    P0 = (P, '0')
+    P1 = (P, '1')
+    P2 = (P, '2')
+    P3 = (P, '3')
+    P4 = (P, '4')
+    P5 = (P, '5')
+    P6 = (P, '6')
+    P7 = (P, '7')
+    P8 = (P, '8')
+    P9 = (P, '9')
 
-    Px = (Print, 'x')
-    Py = (Print, 'y')
-    Pz = (Print, 'z')
+    Px = (P, 'x')
+    Py = (P, 'y')
+    Pz = (P, 'z')
 
     R  = Forward
+    R2,R3,R4,R5,R6,R7,R8,R9 = (R,2),(R,3),(R,4),(R,5),(R,6),(R,7),(R,8),(R,9)
+
     L  = Backward
+    L2,L3,L4,L5,L6,L7,L8,L9 = (L,2),(L,3),(L,4),(L,5),(L,6),(L,7),(L,8),(L,9)
 
+    NOP = lambda x: x
 
-class TuringMachine:
+INSTRUCTION_TABLE_CONTEXT = {'Tape': Tape}
+INSTRUCTION_TABLE_CONTEXT.update(Tape.__dict__)
 
-    def __init__(self, initial_state, instruction_table, tape=None):
+class TuringMachine(object):
+
+    EMPTY_INSTRUCTION_TABLE = {None:(Tape.NOP,None)}
+
+    def __init__(self, initial_state=None, instruction_table_desc=None, tape=None):
         """
         """
         self.__tape         = Tape() if not tape else tape
         self.__cur_state    = initial_state
-        self.__inst_table   = instruction_table
-        self.__steps        = 0
+        self.__program_counter        = 0
+        self.LoadInstructionTable(instruction_table_desc)
+
+    def __str__(self):
+        return 'Turing Machine(steps={2}, state=`{0}`, tape={1})'.format(self.__cur_state, self.__tape, self.__program_counter)
+
+    def __get_tape__(self):
+        return self.__tape
+
+    tape = property(fget=__get_tape__)
+
+    def cleanup_input_string(self, str):
+        if str:
+            return str.replace(' ', '').replace('\n', '').replace('\r', '').replace('\t', '')
+        else:
+            return str
+
+    def LoadInstructionTable(self, inst_tab_desc):
+        inst_tab_desc = self.cleanup_input_string(inst_tab_desc)
+        self.__inst_table = eval(inst_tab_desc, INSTRUCTION_TABLE_CONTEXT) \
+                                if inst_tab_desc \
+                                else TuringMachine.EMPTY_INSTRUCTION_TABLE
+        self.__inst_table_str = inst_tab_desc if inst_tab_desc else ''
 
     def Step(self):
         s = self.__tape.Read()
         inst = self.__inst_table[self.__cur_state]
+
         if isinstance(inst, dict):
             actions, final_state = inst[s] if inst.has_key(s) else inst[None]
         else:
             actions, final_state = inst
+
         if callable(actions):
             actions(self.__tape)
         else:
             for action in actions:
                 if callable(action):
                     action(self.__tape)
-                elif isinstance(action, tuple) or isinstance(action, list):
+                elif isinstance(action, (list,tuple)):
                     action[0](self.__tape, *action[1:])
                 else:
                     raise Exception()
         self.__cur_state = final_state
-        self.__steps += 1
-
-    def __str__(self):
-        return 'Turing Machine({2})\nTM State: {0}\n{1}'.format(self.__cur_state, self.__tape, self.__steps)
+        self.__program_counter += 1
 
     def Encode(self):
-        encoded_inst_table = []
-        for state, action_map in self.__inst_table.items():
-            encoded_action_map = []
-            for symbol, actions in action_map.items():
-                actions_str = []
-                for action in actions:
-                    print action
-                    actions_str.append(action)
-                encoded_action_map.append('{0}: {1}'.format(symbol, actions_str))
-            encoded_inst_table.append()
-        return '({0},{1},"{2}",{3})'.format(self.__cur_state, '',self.__tape.Encode(),self.__steps)
+        return '({0},{1},{2},{3})'.format(repr(self.__cur_state), repr(self.__program_counter), repr(self.__inst_table_str), repr(self.__tape.Encode()))
 
-    def Decode(self, encoded_tm):
-        self.__cur_state,self.__inst_table,encoded_tape,self.__steps = eval(encoded_tm)
-        self.__tape.Decode(encoded_tape)
+    def Decode(self, tm_encode):
+        tm_encode = self.cleanup_input_string(tm_encode)
+        tm_tuple = eval(tm_encode)
+
+        tape_encode, inst_table_desc = None, None
+
+        if len(tm_tuple) == 4:
+            self.__cur_state, self.__program_counter, inst_table_desc, tape_encode = tm_tuple
+        elif len(tm_tuple) == 3:
+            self.__cur_state, inst_table_desc, tape_encode = tm_tuple
+        elif len(tm_tuple) == 2:
+            self.__cur_state, inst_table_desc = tm_tuple
+
+        if tape_encode:
+            self.__tape.Decode(tape_encode)
+        if inst_table_desc:
+            self.LoadInstructionTable(inst_table_desc)
+
+import codecs
+def read_encoded_tm(f):
+    if not isinstance(f, file):
+        f = file(f)
+    lines = []
+    utf8_file = codecs.getreader('utf-8')(f)
+    with utf8_file:
+        for line in utf8_file:
+            i = line.find('#')
+            if i >= 0:
+                line = line[:i]
+            lines.append(line)
+    return ''.join(lines)
+
 
 if __name__=='__main__':
-    it ={
-        'b':{
-            None:  ((Tape.P0,),
-                    'b'),
-            '0':    ([Tape.R, Tape.R, Tape.P1],
-                     'b'),
-            '1':    ((Tape.R, Tape.R, Tape.P0),
-                     'b')
-            }
-        }
-    tape = Tape()
-    tm = TuringMachine(initial_state='b', instruction_table=it, tape=tape)
+    import sys
 
-    enc_tm = tm.Encode()
+    tm = TuringMachine()
 
-    for i in range(2):
-        tm.Step()
-        print tm
-        print '-'*20
+    max_steps = 10
 
-    tm.Decode(enc_tm)
-    print tm
+    if len(sys.argv) > 1:
+        tm.Decode(read_encoded_tm(sys.argv[1]))
+
+        if len(sys.argv) > 2:
+            max_steps = int(sys.argv[2])
+
+        for i in range(max_steps):
+            tm.Step()
+            sys.stderr.write(tm.tape.TapeString() + '\n')
+
+        print tm.Encode()
+    else:
+        print 'Usage:\npython %s encoded_tm_file(utf-8) [max steps]' % __file__
+
+

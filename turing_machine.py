@@ -197,15 +197,15 @@ if __name__=='__main__':
         if len(sys.argv) > 2:
             max_steps = int(sys.argv[2])
 
-        sys.stderr.write(tm.tape.TapeString() + '\n')
+        sys.stderr.write('[0]: ' + tm.tape.TapeString() + '\n')
 
         for i in range(max_steps):
             tm.Step()
 
-        sys.stderr.write(tm.tape.TapeString() + '\n')
+        sys.stderr.write('[{0}]: '.format(max_steps) + tm.tape.TapeString() + '\n')
         sys.stderr.flush()
 
     else:
-        print 'Usage: python %s encoded_tm_file(utf-8) [max steps]' % __file__
+        print 'Usage: python %s encoded_tm_file(utf-8) [max steps, default 10]' % __file__
 
 

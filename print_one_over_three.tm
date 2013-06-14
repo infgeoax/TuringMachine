@@ -13,23 +13,26 @@
 #   L2~L9 - are short-hands for (L,2), (L,3), ..., (L,9)
 # 3. NOP - does nothing.
 
-# TM File :: ( <Initial State>, [<Program Counter>,] <Instruction Table>, [<Tape Description>] )
+# A TuringMachine Program :: ( <Initial State>, <Instruction Table>, [<Program Counter>,] [<Tape Description>] )
 # Initial State:: A key to the instruction table, the initial state of the TM.
 # Program Counter:: Optional field, default 0, remembers the number of steps a TM has run.
 # Instruction Table:: { <TM State>: <Symbol-Actions-State Table>, ... }
-# Symbol-Actions-State Table:: { <Symbol at cursor>: (<Actions>, <Next-State>), ... }
-# Actions:: [<Instruction>, ...]
-# Instruction:: NOP,R,R2~R9,L,L2~L9,Print,P0~P9,Px,Py,Pz,Erase/E,(R|L|P,<Arg>)
-# The following is a program that calculates the binary representation of 1/3.
+#   Symbol-Actions-State Table:: { <Symbol at cursor>: (<Actions>, <Next-State>), ... }
+#   Actions:: [<Instruction>, ...]
+#   Instruction:: NOP,R,R2~R9,L,L2~L9,Print,P0~P9,Px,Py,Pz,Erase/E,(R|L|P,<Arg>)
+# Tape Description:: (<Cursor Position>, <Right Tape>, <Left Tape>)
+
+# Here is a program that calculates the binary representation of 1/3.
 (
-    'b', # initial state
-     # PC, optional, default 0.
-     # Instruction table
-     u"{'b': {
-                None: ([P0,],    'b'),
-                '0':  ([R2,P1], 'b'),
-                '1':  ([R2,P0], 'b'),
-            }
-       }",
-    # Tape, optional, default: '(0,[None],[None])'
+    # initial state
+    'b',
+    # Instruction table
+    u"{ 'b': { None: ([P0,],    'b'),
+               '0':  ([R2,P1], 'b'),
+               '1':  ([R2,P0], 'b'), } }",
+
+    # Program counter, optional, default 0.
+    # 0,
+    # Tape description, optional, default: '(0,[None],[None])'
+    # '(0,[None],[None])'
 )

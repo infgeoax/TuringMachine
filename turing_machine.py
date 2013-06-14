@@ -158,7 +158,7 @@ class TuringMachine(object):
         tape_encode, inst_table_desc = None, None
 
         if len(tm_tuple) == 4:
-            self.__cur_state, self.__program_counter, inst_table_desc, tape_encode = tm_tuple
+            self.__cur_state, inst_table_desc, self.__program_counter, tape_encode = tm_tuple
         elif len(tm_tuple) == 3:
             self.__cur_state, inst_table_desc, tape_encode = tm_tuple
         elif len(tm_tuple) == 2:
@@ -197,12 +197,15 @@ if __name__=='__main__':
         if len(sys.argv) > 2:
             max_steps = int(sys.argv[2])
 
+        sys.stderr.write(tm.tape.TapeString() + '\n')
+
         for i in range(max_steps):
             tm.Step()
-            sys.stderr.write(tm.tape.TapeString() + '\n')
 
-        print tm.Encode()
+        sys.stderr.write(tm.tape.TapeString() + '\n')
+        sys.stderr.flush()
+
     else:
-        print 'Usage:\npython %s encoded_tm_file(utf-8) [max steps]' % __file__
+        print 'Usage: python %s encoded_tm_file(utf-8) [max steps]' % __file__
 
 
